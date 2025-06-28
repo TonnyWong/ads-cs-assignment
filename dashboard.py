@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import joblib
 
 def load_data():
     # Load the processed dataset
@@ -72,8 +73,45 @@ def main():
     # Apply filters
     df_filtered = apply_filters(df)
 
+    # Summary metrics
+    avg_exam_score = df_filtered["exam_score"].mean()
+    avg_study_hours = df_filtered["study_hours_per_day"].mean()
+    avg_screen_time = (df_filtered["social_media_hours"] + df_filtered["netflix_hours"]).mean()
+
+    # Display metrics in columns
+    st.markdown("### 📊 Summary Metrics")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Average Exam Score", f"{avg_exam_score:.2f}")
+    col2.metric("Avg Study Hours (hrs/day)", f"{avg_study_hours:.2f}")
+    col3.metric("Average Screen Time (hrs/day)", f"{avg_screen_time:.2f}")
+
     plot_study_hours_vs_exam_score(df_filtered)
     plot_attendance_category_bar(df_filtered)
+
+    st.subheader("Exam Score Prediction")
+
+    # Load model
+    model = joblib.load("exam_score_model.pkl")
+
+    # User input
+    Study_Hours_per_day = st.number_input("Study Hours (hrs/day)", min_value=0)
+    Screen_Time = st.number_input("Screen Time (hrs/day)", min_value=0)
+    Attendance_Percentage = st.slider("Attendance Percentage", 10, 100)
+
+    # Prepare input
+    input_df = pd.DataFrame({
+        "study_hours_per_day": [Study_Hours_per_day],
+        "screen_time": [Screen_Time],
+        "attendance_percentage": [Attendance_Percentage]
+    })
+
+    # Predict
+    predicted_exam_score = model.predict(input_df)[0]
+
+    # Ensure the predicted score does not exceed 100%
+    predicted_exam_score = min(predicted_exam_score, 100)
+
+    st.metric("Predicted Exam Score", f"{predicted_exam_score:,.2f}%")
 
 if __name__ == "__main__":
     main()
