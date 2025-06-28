@@ -26,13 +26,23 @@ def apply_filters(df):
     ]
     return filtered_df
 
+def categorize_screen_time(hours):
+    if hours < 2:
+        return "Low"
+    elif hours < 5:
+        return "Moderate"
+    else:
+        return "High"
+
 def plot_study_hours_vs_exam_score(df):
-    st.subheader("Study Hours vs Exam Score")
+    df["screen_time_category"] = df["screen_time"].apply(categorize_screen_time)
+    st.subheader("Study Hours vs Exam Score (by Screen Time Category)")
     fig, ax = plt.subplots()
-    sns.scatterplot(data=df, x="study_hours_per_day", y="exam_score", ax=ax)
+    sns.scatterplot(data=df, x="study_hours_per_day", y="exam_score", hue="screen_time_category", ax=ax)
     ax.set_xlabel("Study Hours per Day")
     ax.set_ylabel("Exam Score")
-    ax.set_title("Effect of Study Hours on Exam Performance")
+    category_order = ["Low", "Moderate", "High"]
+    ax.legend(title="Screen Time Category", loc="upper left", bbox_to_anchor=(1, 1),labels=category_order)
     st.pyplot(fig)
 
 def plot_attendance_category_bar(df):
@@ -53,7 +63,6 @@ def plot_attendance_category_bar(df):
     sns.barplot(data=summary, x="attendance_bin", y="exam_score", palette="Blues_d", ax=ax)
     ax.set_xlabel("Attendance Percentage Range")
     ax.set_ylabel("Average Exam Score")
-    ax.set_title("Academic Performance by Attendance Range")
     st.pyplot(fig)
 
 def main():
