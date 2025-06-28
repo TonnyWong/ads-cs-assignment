@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+import plotly.express as px
 
 def load_data():
     # Load the processed dataset
@@ -37,14 +38,22 @@ def categorize_screen_time(hours):
 
 def plot_study_hours_vs_exam_score(df):
     df["screen_time_category"] = df["screen_time"].apply(categorize_screen_time)
+    category_order = ["Low", "Moderate", "High"] 
     st.subheader("Study Hours vs Exam Score (by Screen Time Category)")
-    fig, ax = plt.subplots()
-    sns.scatterplot(data=df, x="study_hours_per_day", y="exam_score", hue="screen_time_category", ax=ax)
-    ax.set_xlabel("Study Hours per Day")
-    ax.set_ylabel("Exam Score")
-    category_order = ["Low", "Moderate", "High"]
-    ax.legend(title="Screen Time Category", loc="upper left", bbox_to_anchor=(1, 1),labels=category_order)
-    st.pyplot(fig)
+    
+    fig = px.scatter(
+        df,
+        x="study_hours_per_day",
+        y="exam_score",
+        color="screen_time_category",
+        hover_data=["gender", "age", "attendance_percentage", "screen_time"],
+        labels={
+            "study_hours_per_day": "Study Hours per Day",
+            "exam_score": "Exam Score"
+        },
+        category_orders={"Screen Time Category": category_order}
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 def plot_attendance_category_bar(df):
     # Define the attendance bins and labels
@@ -60,11 +69,20 @@ def plot_attendance_category_bar(df):
 
     # Plot the bar chart
     st.subheader("Attendance Percentage vs Exam Score")
-    fig, ax = plt.subplots()
-    sns.barplot(data=summary, x="attendance_bin", y="exam_score", palette="Blues_d", ax=ax)
-    ax.set_xlabel("Attendance Percentage Range")
-    ax.set_ylabel("Average Exam Score")
-    st.pyplot(fig)
+
+    fig = px.bar(
+        summary,
+        x="attendance_bin",
+        y="exam_score",
+        text="exam_score",
+        labels={"attendance_bin": "Attendance Percentage Range", "exam_score": "Average Exam Score"},
+        color="exam_score",
+        color_continuous_scale="Blues"
+    )
+
+    fig.update_traces(hovertemplate='Attendance: %{x}<br>Avg Score: %{y:.2f}', texttemplate='%{text:.1f}', textposition='outside')
+    fig.update_layout(yaxis=dict(range=[0, 100]))
+    st.plotly_chart(fig, use_container_width=True)
 
 def main():
     st.title("Student Behaviour Influencing Academic Performance")
